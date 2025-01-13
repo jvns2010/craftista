@@ -20,10 +20,16 @@ jobs:
       - name: Detect Changed Service
         id: detect-changes
         run: |
-          # Check which directory was modified
-          SERVICE=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | awk -F/ '{print $1}' | sort | uniq)
+          # Check for changes between the last commit and the current commit
+          if [ "${{ github.event_name }}" == "push" ]; then
+            BASE_SHA=${GITHUB_SHA}~1
+          else
+            BASE_SHA=${GITHUB_PARENT_SHA}
+          fi
+          SERVICE=$(git diff --name-only $BASE_SHA $GITHUB_SHA | awk -F/ '{print $1}' | sort | uniq)
           echo "service=$SERVICE" >> $GITHUB_ENV
 
+          
       - name: Build and Test Modified Service
         run: |
           case $SERVICE in
